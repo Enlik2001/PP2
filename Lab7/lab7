@@ -1,0 +1,53 @@
+# import and set of variables
+import pygame
+pygame.init()
+
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GRID_COLOR = (128, 0, 128) #purple color for the grid
+
+width, height = 500, 500
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("Grid")
+screen.fill(WHITE)
+
+# graph paper background function
+def graph_paper(k):
+    screen.set_clip(0, 0, width, height)
+    screen.fill(WHITE)
+    
+    # draw the graph paper
+    for i in range(int(width/k)):
+        gridx = k*i
+        gridy = k*i
+        pygame.draw.line(screen, GRID_COLOR, (gridx, 0), (gridx, height), 1)
+        pygame.draw.line(screen, GRID_COLOR, (0, gridy), (width, gridy), 1)
+    
+    #clip reset to all the window
+    screen.set_clip(None)
+
+# main function
+def main():
+    # pixel per grid (always use a k that is a factor of width and height)
+    k = 25
+    graph_paper(k)
+
+    # the main active loop
+    active = True
+    while active:
+        # update the screen
+        screen.set_clip(width, height, width, height)
+        screen.fill(WHITE)
+        pygame.display.update()
+         
+        #keyboard and mouse actions
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                active = False
+                
+    # Quit
+    pygame.quit()
+    
+# Run the program
+if _name_ == '_main_':
+    main()
