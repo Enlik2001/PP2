@@ -1,0 +1,83 @@
+import pygame
+
+# Initialize Pygame
+pygame.init()
+
+WHITE = (255, 255, 255)
+GRID_COLOR = (200, 200, 200)
+
+# Create the screen
+width, height = 800, 600
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("Grid")
+
+def graph_paper(k, grid_color):
+    screen.set_clip(0, 0, width, height)
+    screen.fill(WHITE)
+    
+    # Draw the grid
+    for i in range(int(width/k)):
+        gridx = k*i
+        gridy = k*i
+        pygame.draw.line(screen, grid_color, (gridx, 0), (gridx, height-100), 1)
+        pygame.draw.line(screen, grid_color, (0, gridy), (width, gridy), 1)
+    
+    # Draw white space below the grid
+    pygame.draw.rect(screen, WHITE, (0, height-100, width, 80))
+    # Draw buttons
+    button = pygame.draw.rect(screen, (128, 0, 128), (50, height-80, 75, 25))
+    
+    font = pygame.font.Font(None, 24)
+    text_surface = font.render('ON/OFF', True, WHITE)
+    screen.blit(text_surface, (60, height-75))
+    # Reset clip to the entire window
+    screen.set_clip(None)
+
+# Main function
+def main():
+    k = 25  # Initial grid size
+    grid_color = GRID_COLOR  # Initial grid color
+    original_color = grid_color  # Store the original color
+    graph_paper(k, grid_color)
+    
+    button_rect = pygame.Rect(20, height - 80, 100, 50)
+    button_text = pygame.font.SysFont(None, 24).render("Toggle Color", True, (0, 0, 0))
+
+    # Main active loop
+    active = True
+    while active:
+        screen.set_clip(width, height, width, height)
+        screen.fill(WHITE)
+        screen.blit(button_text, (25, height - 70))  # Draw button text
+        pygame.draw.rect(screen, (0, 0, 0), button_rect, 1)  # Draw button border
+ 
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                active = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    k += 5  # Increase grid size by 5
+                elif event.key == pygame.K_DOWN:
+                    k -= 5  # Decrease grid size by 5
+                elif event.key == pygame.K_r:
+                    grid_color = (255, 0, 0)  # Red color
+                elif event.key == pygame.K_g:
+                    grid_color = (0, 255, 0)  # Green color
+                elif event.key == pygame.K_b:
+                    grid_color = (0, 0, 255)  # Blue color
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1 and button_rect.collidepoint(event.pos):  # Left mouse button and clicked on button
+                    if grid_color == WHITE:
+                        grid_color = original_color  # Restore original color
+                    else:
+                        original_color = grid_color  # Save current color as original
+                        grid_color = WHITE  # Set grid color to white
+                # Ensure grid size is within bounds
+        k = max(5, min(100, k))  # Limit grid size between 5 and 100
+        graph_paper(k, grid_color)
+
+        pygame.display.update()
+    pygame.quit()
+
+if __name__ == '__main__':
+    main()
