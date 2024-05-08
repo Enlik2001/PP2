@@ -1,1 +1,100 @@
+import pygame
+import random
+
+pygame.init()
+
+WHITE = (255, 255, 255)
+GRID_COLOR = (200, 200, 200)
+ORANGE = (255, 165, 0)
+width, height = 500, 500
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("Grid")
+
+def graph_paper(k, grid_color, orange_color):
+    screen.set_clip(0, 0, width, height)
+    screen.fill(WHITE)
+    
+    for i in range(int(width/k)):
+        for j in range(int(height/k)):
+            gridx = k * i
+            gridy = k * j
+            if (i + j) % 2 == 0:
+                pygame.draw.rect(screen, orange_color, (gridx, gridy, k, k))
+            else:
+                pygame.draw.rect(screen, grid_color, (gridx, gridy, k, k))
+    
+    pygame.draw.rect(screen, WHITE, (0, height-100, width, 100))  # Draw a rectangle for white space below the grid
+    
+    # Draw the button
+    button_rect = pygame.Rect(20, height - 80, 100, 50)
+    pygame.draw.rect(screen, (128, 0, 128), button_rect)
+    
+    font = pygame.font.Font(None, 24)
+    text_surface = font.render('ON/OFF', True, WHITE)
+    screen.blit(text_surface, (35, height-65))
+    # Reset clip to the entire window
+    screen.set_clip(None)
+    return button_rect
+
+def draw_checker(x, y, size):
+    pygame.draw.circle(screen, (255, 0, 0), (x, y), size)
+
+def main():
+    k = 50  # Initial grid size
+    grid_color = WHITE  # Initial grid color
+    orange_color = ORANGE  # Initial orange color
+    original_color = grid_color  # Store the original color
+    button_rect = graph_paper(k, grid_color, orange_color)  # Draw the graph paper with initial settings
+    
+    button_text = pygame.font.SysFont(None, 24).render("ON/OFF", True, (0, 0, 0))
+
+    active = True  # Set the flag for the main loop
+    is_grid_white = False
+    
+    while active:  # Start the main loop
+        screen.set_clip(width, height, width, height)
+        screen.fill(WHITE)
+        screen.blit(button_text, (25, height - 70))  # Draw button text
+        pygame.draw.rect(screen, (0, 0, 0), button_rect, 1)  # Draw button border
+
+        # Generate random position for the checker
+        checker_x = random.randint(0, width - 50)
+        checker_y = random.randint(0, height - 150)
+        
+        # Draw the checker at the random position
+        draw_checker(checker_x, checker_y, 20)
+
+        for event in pygame.event.get():  # Iterate over each event in the event queue
+            if event.type == pygame.QUIT:  # Check if the user wants to quit
+                active = False  # Set the flag to exit the loop
+            elif event.type == pygame.KEYDOWN:  # Check if a key is pressed
+                if event.key == pygame.K_UP:  # Check if the up arrow key is pressed
+                    k += 5  # Increase grid size by 5
+                elif event.key == pygame.K_DOWN:  # Check if the down arrow key is pressed
+                    k -= 5  # Decrease grid size by 5
+                elif event.key == pygame.K_r:  # Check if the 'r' key is pressed
+                    grid_color = (255, 0, 0)  # Set grid color to red
+                elif event.key == pygame.K_g:  # Check if the 'g' key is pressed
+                    grid_color = (0, 255, 0)  # Set grid color to green
+                elif event.key == pygame.K_b:  # Check if the 'b' key is pressed
+                    grid_color = (0, 0, 255)  # Set grid color to blue
+            elif event.type == pygame.MOUSEBUTTONDOWN:  # Check if a mouse button is pressed
+                if event.button == 1 and button_rect.collidepoint(event.pos):  # Check if the left mouse button is pressed on the button
+                    if grid_color == WHITE:  # Check if grid color is white
+                        grid_color = original_color  # Restore original grid color
+                        orange_color = ORANGE  # Restore original orange color
+                    else:
+                        original_color = grid_color  # Save current color as original
+                        grid_color = WHITE  # Set grid color to white
+                        orange_color = WHITE  # Set orange color to white
+                    is_grid_white = not is_grid_white
+
+        k = max(5, min(100, k))  # Limit grid size between 5 and 100
+        graph_paper(k, grid_color, orange_color)
+        pygame.display.update()  # Update the display
+        
+    pygame.quit()  # Quit pygame when the loop exits
+
+if __name__ == '__main__':
+    main()
 
