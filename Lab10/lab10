@@ -1,0 +1,146 @@
+import pygame
+import random
+
+pygame.init()
+
+WHITE = (255, 255, 255)
+GRID_COLOR = (200, 200, 200)
+ORANGE = (255, 165, 0)
+width, height = 500, 500
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("Grid")
+
+# Загрузка изображения шашки
+checker_img = pygame.image.load('C:/Users/Erik/Documents/PP2/lab8/checker.png')
+
+def graph_paper(k, grid_color, orange_color):
+    screen.set_clip(0, 0, width, height)
+    screen.fill(WHITE)
+    
+    for i in range(int(width/k)):
+        for j in range(int(height/k)):
+            gridx = k * i
+            gridy = k * j
+            if (i + j) % 2 == 0:
+                pygame.draw.rect(screen, orange_color, (gridx, gridy, k, k))
+            else:
+                pygame.draw.rect(screen, grid_color, (gridx, gridy, k, k))
+    
+    pygame.draw.rect(screen, WHITE, (0, height-100, width, 100))  # Draw a rectangle for white space below the grid
+    
+    # Draw the button
+    button_rect = pygame.Rect(20, height - 80, 100, 50)
+    pygame.draw.rect(screen, (128, 0, 128), button_rect)
+    
+    font = pygame.font.Font(None, 24)
+    text_surface = font.render('ON/OFF', True, WHITE)
+    screen.blit(text_surface, (35, height-65))
+    # Reset clip to the entire window
+    screen.set_clip(None)
+    return button_rect
+
+def draw_checker(x, y, k):
+    scaled_checker_img = pygame.transform.scale(checker_img, (k - 10, k - 10))
+    screen.blit(scaled_checker_img, (x - scaled_checker_img.get_width() // 2, y - scaled_checker_img.get_height() // 2))
+
+def get_random_white_cell(k):
+    cols = width // k
+    rows = (height - 100) // k  # Adjust to exclude the button area
+    while True:
+        x = random.randint(0, cols - 1)
+        y = random.randint(0, rows - 1)
+        if (x + y) % 2 != 0:
+            return x * k + k // 2, y * k + k // 2
+
+def move_to_next_white_cell(x, y, k, direction):
+    col = x // k
+    row = y // k
+    
+    if direction == "left":
+        for i in range(col - 1, -1, -1):
+            if (i + row - 1) % 2 != 0 and row - 1 >= 0:
+                return i * k + k // 2, (row - 1) * k + k // 2
+    elif direction == "right":
+        for i in range(col + 1, width // k):
+            if (i + row - 1) % 2 != 0 and row - 1 >= 0:
+                return i * k + k // 2, (row - 1) * k + k // 2
+    return x, y  # If no move possible, return original coordinates
+
+def main():
+    k = 50  # Initial grid size
+    grid_color = WHITE  # Initial grid color
+    orange_color = ORANGE  # Initial orange color
+    original_color = GRID_COLOR  # Store the original color
+    button_rect = graph_paper(k, grid_color, orange_color)  # Draw the graph paper with initial settings
+    
+    button_text = pygame.font.SysFont(None, 24).render("ON/OFF", True, (0, 0, 0))
+
+    # Randomly generate coordinates for the checker on a white cell
+    checker_x, checker_y = get_random_white_cell(k)
+
+    active = True  # Set the flag for the main loop
+    is_grid_white = False
+    dragging = False  # Flag to check if the checker is being dragged
+    show_checker = True  # Flag to show/hide the checker
+    
+    while active:  # Start the main loop
+        screen.set_clip(width, height, width, height)
+        screen.fill(WHITE)
+        screen.blit(button_text, (25, height - 70))  # Draw button text
+        pygame.draw.rect(screen, (0, 0, 0), button_rect, 1)  # Draw button border
+        
+        for event in pygame.event.get():  # Iterate over each event in the event queue
+            if event.type == pygame.QUIT:  # Check if the user wants to quit
+                active = False  # Set the flag to exit the loop
+            elif event.type == pygame.KEYDOWN:  # Check if a key is pressed
+                if event.key == pygame.K_UP:  # Check if the up arrow key is pressed
+                    k += 5  # Increase grid size by 5
+                elif event.key == pygame.K_DOWN:  # Check if the down arrow key is pressed
+                    k -= 5  # Decrease grid size by 5
+                elif event.key == pygame.K_r:  # Check if the 'r' key is pressed
+                    grid_color = (255, 0, 0)  # Set grid color to red
+                    original_color = grid_color  # Update original color
+                elif event.key == pygame.K_g:  # Check if the 'g' key is pressed
+                    grid_color = (0, 255, 0)  # Set grid color to green
+                    original_color = grid_color  # Update original color
+                elif event.key == pygame.K_b:  # Check if the 'b' key is pressed
+                    grid_color = (0, 0, 255)  # Set grid color to blue
+                    original_color = grid_color  # Update original color
+                elif event.key == pygame.K_LEFT:  # Check if the left arrow key is pressed
+                    checker_x, checker_y = move_to_next_white_cell(checker_x, checker_y, k, "left")
+                elif event.key == pygame.K_RIGHT:  # Check if the right arrow key is pressed
+                    checker_x, checker_y = move_to_next_white_cell(checker_x, checker_y, k, "right")
+            elif event.type == pygame.MOUSEBUTTONDOWN:  # Check if a mouse button is pressed
+                if event.button == 1 and button_rect.collidepoint(event.pos):  # Check if the left mouse button is pressed on the button
+                    if is_grid_white:  # Check if grid is currently white
+                        grid_color = WHITE  # Restore original grid color
+                        orange_color = ORANGE  # Restore original orange color
+                        show_checker = True  # Show the checker
+                        checker_x, checker_y = get_random_white_cell(k)  # Move checker to a new random white cell
+                    else:
+                        grid_color = WHITE  # Set grid color to white
+                        orange_color = WHITE  # Set orange color to white
+                        show_checker = False  # Hide the checker
+                    is_grid_white = not is_grid_white
+                elif event.button == 1:  # Check if the left mouse button is pressed
+                    mouse_x, mouse_y = event.pos
+                    if (checker_x - k // 2 <= mouse_x <= checker_x + k // 2 and 
+                        checker_y - k // 2 <= mouse_y <= checker_y + k // 2):  # Check if the checker is clicked
+                        dragging = True  # Set the flag to start dragging
+            elif event.type == pygame.MOUSEBUTTONUP:  # Check if a mouse button is released
+                if event.button == 1:  # Check if the left mouse button is released
+                    dragging = False  # Stop dragging
+            elif event.type == pygame.MOUSEMOTION:  # Check if the mouse is moved
+                if dragging:  # If dragging, update the checker position
+                    checker_x, checker_y = event.pos
+
+        k = max(25, min(100, k))  # Limit grid size between 25 and 100
+        graph_paper(k, grid_color, orange_color)
+        if show_checker:  # Draw the checker only if show_checker is True
+            draw_checker(checker_x, checker_y, k)
+        pygame.display.update()  # Update the display
+        
+    pygame.quit()  # Quit pygame when the loop exits
+
+if __name__ == '__main__':
+    main()
